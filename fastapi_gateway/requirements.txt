@@ -1,0 +1,6 @@
+# 의존성 
+fastapi
+uvicorn
+requests
+cryptography
+pyjwt
