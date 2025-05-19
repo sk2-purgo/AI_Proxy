@@ -11,4 +11,4 @@ redis_conn = redis.Redis(
 )
 
 # ✅ 연결 확인용 (선택적)
-print("✅ Redis 연결 성공:", redis_conn.ping())
+print(" Redis 연결 성공:", redis_conn.ping())

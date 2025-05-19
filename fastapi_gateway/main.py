@@ -90,6 +90,12 @@ def periodic_cleanup():
 
 
 # uvicorn fastapi_gateway.main:app --reload --port 8001 --host 0.0.0.0 --http h11
+
+
 # taskkill /f /im python.exe
+
+
 # python fastapi_gateway/log_consumer.py
+
+
 #  uvicorn fastapi_gateway.main:app --port 8001 --host 0.0.0.0 --http h11
