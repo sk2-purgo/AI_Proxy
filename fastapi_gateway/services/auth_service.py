@@ -6,7 +6,7 @@ import json
 import hashlib
 from datetime import datetime
 
-async def verify_api_key_and_jwt(request: Request) -> bool:
+async def verify_api_key_and_jwt(request: Request, request_body: dict) -> bool:
     db = SessionLocal()
     try:
         headers = request.headers
@@ -67,7 +67,7 @@ async def verify_api_key_and_jwt(request: Request) -> bool:
 
         # 6. 서버-프록시용 JWT 검증
         print("🛡️ [DEBUG] JWT 서명 검증 수행 시작")
-        if verify_server_jwt(jwt_token, body_json, api_key):
+        if verify_server_jwt(jwt_token, request_body , api_key):
             redis_conn.setex(key, 30, "1")
             print("[DEBUG] JWT 해시 저장 완료 (Redis 캐시 등록)")
             return True

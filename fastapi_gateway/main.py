@@ -5,13 +5,13 @@ from fastapi_gateway.services.auth_service import verify_api_key_and_jwt
 from fastapi_gateway.utils.redis_client import redis_conn
 from fastapi_utils.tasks import repeat_every
 from fastapi_gateway.cleanup_task import cleanup_expired_api_keys
-from fastapi_gateway.routes import key_issuer  # 📌 issue-key 라우터 분리 등록
+from fastapi_gateway.routes import key_issuer  #
 import requests
 import json
 import uuid
 from datetime import datetime
 
-print("✅ FastAPI main.py 로딩됨")
+print(" FastAPI main.py 로딩됨")
 app = FastAPI()
 
 # 📌 라우터 등록
@@ -31,14 +31,14 @@ async def proxy_auth_middleware(request: Request, call_next):
         print("🛡️ [미들웨어] 인증 진입:", path)
         print("🔍 [미들웨어] 요청 IP:", request.client.host)
         print("🔍 [미들웨어] 요청 헤더:", dict(request.headers))
-        # ✅ request_body에 원문도 포함시켜서 넘김
+        #  request_body에 원문도 포함시켜서 넘김
         try:
             request_body = json.loads(request.state.body_str)
             request_body["__raw_body__"] = request.state.body_str
         except Exception as e:
             return JSONResponse(status_code=400, content={"error": f"요청 본문 파싱 실패: {str(e)}"})
 
-        is_valid = await verify_api_key_and_jwt(request, request_body)  # ✅ 수정된 시그니처에 맞게 호출
+        is_valid = await verify_api_key_and_jwt(request, request_body)  # 수정된 시그니처에 맞게 호출
         if not is_valid:
             return JSONResponse(status_code=401, content={"error": "API Key 또는 JWT 인증 실패"})
 
@@ -81,7 +81,7 @@ async def analyze_proxy(request: Request):
 
 @app.on_event("startup")
 def on_startup():
-    print("✅ FastAPI 서버 시작 이벤트 진입")
+    print(" FastAPI 서버 시작 이벤트 진입")
 
 @repeat_every(seconds=86400)
 def periodic_cleanup():
