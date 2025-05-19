@@ -1,109 +1,95 @@
-from fastapi import FastAPI, Request, HTTPException, Header
-from pydantic import BaseModel
-from typing import Optional
-from sqlalchemy import create_engine, Column, String, Integer, Enum, TIMESTAMP
-from sqlalchemy.orm import sessionmaker, declarative_base
-from enum import Enum as PyEnum
-from jwt_utils import verify_server_jwt
+# fastapi_gateway/main.py
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi_gateway.services.auth_service import verify_api_key_and_jwt
+from fastapi_gateway.utils.redis_client import redis_conn
+from fastapi_utils.tasks import repeat_every
+from fastapi_gateway.cleanup_task import cleanup_expired_api_keys
+from fastapi_gateway.routes import key_issuer  # 📌 issue-key 라우터 분리 등록
 import requests
-import datetime
-import pymysql  # sqlalchemy + pymysql 조합 시 필요
 import json
+import uuid
+from datetime import datetime
 
-#  DB 연결 설정
-DATABASE_URL = "mysql+pymysql://root:proxy1234@localhost:3307/purgo_proxy"
-engine = create_engine(DATABASE_URL, echo=True)  # ← 쿼리 출력 활성화
-SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
-
-#  ENUM 타입 정의
-class StatusEnum(PyEnum):
-    ACTIVE = "ACTIVE"
-    REVOKED = "REVOKED"
-
-#  DB 테이블 모델
-class ApiKey(Base):
-    __tablename__ = "api_keys"
-    id = Column(Integer, primary_key=True, index=True)
-    api_key = Column(String(64), unique=True, index=True)
-    status = Column(Enum(StatusEnum, native_enum=False))
-    memo = Column(String(255))
-    created_at = Column(TIMESTAMP)
-
-class UsageLog(Base):
-    __tablename__ = "usage_log"
-    id = Column(Integer, primary_key=True, index=True)
-    api_key = Column(String(64))
-    endpoint = Column(String(64))
-    req_bytes = Column(Integer)
-    res_bytes = Column(Integer)
-    called_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-
-#  Flask 서버 주소
-# FLASK_AI_URL = "http://127.0.0.1:5000/analyze"
-FLASK_AI_URL = "http://3.34.64.170:5000/analyze"
-
-#  FastAPI 앱
+print("✅ FastAPI main.py 로딩됨")
 app = FastAPI()
 
-#  요청 바디 모델
-class TextRequest(BaseModel):
-    text: str
+# 📌 라우터 등록
+app.include_router(key_issuer.router)
 
-#  /proxy/analyze 라우터
+FLASK_AI_URL = "http://127.0.0.1:5000/analyze"
+
+@app.middleware("http")
+async def proxy_auth_middleware(request: Request, call_next):
+    body_bytes = await request.body()
+    request.state.body = body_bytes
+    request.state.body_str = body_bytes.decode("utf-8")  # ✅ 원문 문자열 저장
+
+    path = request.url.path
+
+    if path.startswith("/proxy/"):
+        print("🛡️ [미들웨어] 인증 진입:", path)
+        print("🔍 [미들웨어] 요청 IP:", request.client.host)
+        print("🔍 [미들웨어] 요청 헤더:", dict(request.headers))
+        # ✅ request_body에 원문도 포함시켜서 넘김
+        try:
+            request_body = json.loads(request.state.body_str)
+            request_body["__raw_body__"] = request.state.body_str
+        except Exception as e:
+            return JSONResponse(status_code=400, content={"error": f"요청 본문 파싱 실패: {str(e)}"})
+
+        is_valid = await verify_api_key_and_jwt(request, request_body)  # ✅ 수정된 시그니처에 맞게 호출
+        if not is_valid:
+            return JSONResponse(status_code=401, content={"error": "API Key 또는 JWT 인증 실패"})
+
+    return await call_next(request)
+
 @app.post("/proxy/analyze")
-async def relay_to_flask(
-        request: Request,
-        authorization: Optional[str] = Header(None),
-        x_auth_token: Optional[str] = Header(None)
-):
-    db = SessionLocal()
-
+async def analyze_proxy(request: Request):
+    print("📥 [프록시] 요청 수신: /proxy/analyze")
+    print("🔸 요청 헤더:", dict(request.headers))
+    print("🔸 요청 IP:", request.client.host)
     try:
-        raw_body = await request.body()  # 🔵 raw_body는 bytes
-        body_str = raw_body.decode('utf-8')  # 🔵 UTF-8로 decode
-        parsed_body = json.loads(body_str)  # 🔵 dict로 변환
-        text = parsed_body.get("text")
+        ip = request.client.host
+        key = f"ratelimit:{ip}"
 
-        print(f"📨 받은 요청: {text}")
+        current = redis_conn.incr(key)
+        if current == 1:
+            redis_conn.expire(key, 60)
+        if current > 10:
+            return JSONResponse(status_code=429, content={"error": "요청 한도 초과 (1분에 10회)"})
 
-        # Authorization 헤더 체크
-        if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        body = json.loads(request.state.body.decode("utf-8"))
+        flask_response = requests.post(FLASK_AI_URL, json=body)
+        result = flask_response.json()
 
-        api_key = authorization.replace("Bearer ", "")
+        log_payload = {
+            "logId": str(uuid.uuid4()),
+            "userId": request.headers.get("X-User-Id", "anonymous"),
+            "originalText": body.get("text", ""),
+            "filteredText": result.get("result", {}).get("rewritten_text", ""),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        print("📤 [프록시] Redis에 로그 발행 준비:", log_payload)
+        redis_conn.publish("filter-log", json.dumps(log_payload))
+        print("📤 [프록시] Redis에 발행 완료")
 
-        # API 키 유효성 확인
-        key_entry = db.query(ApiKey).filter_by(api_key=api_key, status=StatusEnum.ACTIVE).first()
-        if not key_entry:
-            raise HTTPException(status_code=401, detail="Invalid API key")
-
-        # JWT 검증
-        if not x_auth_token:
-            raise HTTPException(status_code=401, detail="Missing X-Auth-Token")
-        if not verify_server_jwt(x_auth_token, parsed_body):
-            raise HTTPException(status_code=401, detail="Invalid or tampered JWT")
-
-        # Flask 서버로 요청
-        flask_response = requests.post(FLASK_AI_URL, json={"text": text})
-        response_data = flask_response.json()
-
-        # 사용 로그 기록
-        db.add(UsageLog(
-            api_key=api_key,
-            endpoint="/proxy/analyze",
-            req_bytes=len(raw_body),
-            res_bytes=len(flask_response.content),
-        ))
-        db.commit()
-
-        return response_data
+        return JSONResponse(content=result)
 
     except Exception as e:
-        print(f"❌ 오류: {str(e)}")
-        return {"error": f"Flask 서버 통신 실패: {str(e)}"}
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
-    finally:
-        db.close()
+@app.on_event("startup")
+def on_startup():
+    print("✅ FastAPI 서버 시작 이벤트 진입")
+
+@repeat_every(seconds=86400)
+def periodic_cleanup():
+    print("🧹 API 키 자동 정리 시작")
+    cleanup_expired_api_keys()
 
 
+# uvicorn fastapi_gateway.main:app --reload --port 8001 --host 0.0.0.0 --http h11
+# taskkill /f /im python.exe
+# python fastapi_gateway/log_consumer.py
+#  uvicorn fastapi_gateway.main:app --port 8001 --host 0.0.0.0 --http h11

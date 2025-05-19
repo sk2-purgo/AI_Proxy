@@ -5,5 +5,8 @@
 ### pip install requests
 ### pip install pymysql
 ### pip install pyjwt
+### pip install redis
+### pip install typing-inspect
+
 ## 중계 서버 실행
 ### uvicorn main:app --host 0.0.0.0 --port 8001

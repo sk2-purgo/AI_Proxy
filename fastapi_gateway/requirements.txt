@@ -1,6 +1,7 @@
 # 의존성 
 fastapi
 uvicorn
+redis
+pyjwt
 requests
 cryptography
-pyjwt
