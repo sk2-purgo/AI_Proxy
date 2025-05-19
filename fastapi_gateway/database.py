@@ -25,6 +25,7 @@ class ApiKey(Base):
     __tablename__ = "api_keys"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_name = Column(String(64))
     api_key = Column(String(64), unique=True, index=True)
     status = Column(String(10))
     memo = Column(String(255))

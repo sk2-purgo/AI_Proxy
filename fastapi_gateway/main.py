@@ -10,9 +10,18 @@ import requests
 import json
 import uuid
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 print(" FastAPI main.py 로딩됨")
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # 또는 ["*"] 임시 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 📌 라우터 등록
 app.include_router(key_issuer.router)
@@ -89,7 +98,14 @@ def periodic_cleanup():
     cleanup_expired_api_keys()
 
 
+# 테스트용
 # uvicorn fastapi_gateway.main:app --reload --port 8001 --host 0.0.0.0 --http h11
+
+# ctrl + c 해도 안 되면 실행하기기
 # taskkill /f /im python.exe
+
+# 로그 받아오기
 # python fastapi_gateway/log_consumer.py
+
+# 실행
 #  uvicorn fastapi_gateway.main:app --port 8001 --host 0.0.0.0 --http h11
