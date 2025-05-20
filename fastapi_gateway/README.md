@@ -1,5 +1,6 @@
 ## 필요 라이브러리 
 ### [.gitignore](../../AI/.idea/.gitignore)
+
 -    ```
         pip install fastapi
         pip install uvicorn
