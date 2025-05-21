@@ -34,10 +34,17 @@
 
 ```bash
   # 의존성 설치
-pip install -r requirements.txt
+pip install fastapi,uvicorn,sqlalchemy,requests,pymysql,pyjwt,redis,typing-inspect,fastapi-utils
+pip install sqlalchemy
+pip install requests
+pip install pymysql
+pip install pyjwt
+pip install redis
+pip install typing-inspect
+pip install fastapi-utils
 
   # FastAPI 실행
-uvicorn main:app --host 0.0.0.0 --port 8001
+uvicorn fastapi_gateway.main:app --port 8001 --host 0.0.0.0 --http h11
 ```
 ---
 ```bash
