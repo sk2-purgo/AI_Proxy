@@ -17,14 +17,14 @@ def run_consumer():
         for message in pubsub.listen():
             print("📨 [RAW] 수신된 메시지:", message)
 
-            if message["type"] != "message":
+            if message["type"] != "message": # message 타입만 실제 데이터 나머지는 구독 확인용
                 print("❕ [무시] 메시지 타입:", message["type"])
                 continue
 
             try:
                 data = json.loads(message["data"])
                 print("📩 필터링 로그 수신:", data)
-                redis_conn.incr("filter:count")
+                redis_conn.incr("filter:count") # 프록시 서버에 총 몇 건의 욕설 필터링이 수행됐는지
             except Exception as e:
                 print("❌ 로그 처리 실패:", str(e))
                 traceback.print_exc()
@@ -39,5 +39,5 @@ def run_consumer():
         traceback.print_exc()
 
 # ✅ 반드시 분리 실행만 가능하도록
-if __name__ == "__main__":
+if __name__ == "__main__": #
     run_consumer()

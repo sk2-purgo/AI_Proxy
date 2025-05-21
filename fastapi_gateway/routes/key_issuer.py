@@ -9,11 +9,11 @@ from sqlalchemy.exc import IntegrityError
 
 router = APIRouter()
 
-# 📥 요청 스키마
-class KeyIssueRequest(BaseModel):
+#  요청 스키마
+class KeyIssueRequest(BaseModel): # Pydantic 기반 모델로 FastAPI가 자동으로 JSON body → 객체로 변환
     user_name: str
 
-# 📤 응답 스키마
+#  응답 스키마
 class KeyIssueResponse(BaseModel):
     api_key: str
     jwt_secret: str
@@ -22,7 +22,7 @@ class KeyIssueResponse(BaseModel):
 def issue_api_key(request: KeyIssueRequest):
     db = SessionLocal()
 
-    new_api_key = str(uuid.uuid4())
+    new_api_key = str(uuid.uuid4()) # 랜덤 기반 uuid 생성
     new_jwt_secret = secrets.token_urlsafe(64)
 
     api_key_entry = ApiKey(

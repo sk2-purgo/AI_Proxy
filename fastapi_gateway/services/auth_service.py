@@ -7,7 +7,7 @@ import hashlib
 from datetime import datetime
 
 async def verify_api_key_and_jwt(request: Request, request_body: dict) -> bool:
-    db = SessionLocal()
+    db = SessionLocal() # db연결을 위한 세션 생성
     try:
         headers = request.headers
         raw_token = headers.get("authorization", "")
@@ -22,18 +22,18 @@ async def verify_api_key_and_jwt(request: Request, request_body: dict) -> bool:
         key_entry = None
 
         # 2. Redis 캐시 확인
-        cached_status = redis_conn.get(f"api_key:{api_key}")
-        if cached_status != "ACTIVE":
-            key_entry = db.query(ApiKey).filter_by(
+        cached_status = redis_conn.get(f"api_key:{api_key}") # redis에 해당 키가 있는지 확인
+        if cached_status != "ACTIVE": # 키가 없거나 ACTIVE가 아닌 경우
+            key_entry = db.query(ApiKey).filter_by( # redis에서 ACTIVE라고 되어 있어도 실제 DB가서 살아 잇는 키인지 확인
                 api_key=api_key, status=StatusEnum.ACTIVE.value
             ).first()
-            if key_entry:
+            if key_entry: # 유효한 키면 redis에 저장
                 redis_conn.setex(f"api_key:{api_key}", 600, "ACTIVE")
             else:
                 print(f"❌ [인증 실패] Redis 캐시 미스 후 DB에 존재하지 않는 API Key: {api_key}")
                 return False
         else:
-            key_entry = db.query(ApiKey).filter_by(api_key=api_key).first()
+            key_entry = db.query(ApiKey).filter_by(api_key=api_key).first() # redis에는 ACTIVE인데 DB에는 없을때 다시 DB 확인
             if not key_entry:
                 print(f"❌ [인증 실패] Redis에는 ACTIVE이나 DB에는 없는 API Key: {api_key}")
                 return False
@@ -43,7 +43,7 @@ async def verify_api_key_and_jwt(request: Request, request_body: dict) -> bool:
         print(f"🔐 [DEBUG] 연결된 JWT 시크릿 키: {key_entry.jwt_secret}")
 
         # 3. 사용 시각 갱신
-        key_entry.last_used = datetime.utcnow()
+        key_entry.last_used = datetime.utcnow() # 해당 api key가 언제 사용 되었는지 기록
         db.commit()
 
         # 4. 요청 바디 해시 생성
@@ -51,7 +51,11 @@ async def verify_api_key_and_jwt(request: Request, request_body: dict) -> bool:
         body_json = json.loads(body_bytes.decode("utf-8"))
 
         #  재직렬화된 문자열을 로그로 출력
-        re_serialized = json.dumps(body_json, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+        re_serialized = json.dumps(
+            body_json,
+            sort_keys=True,
+            separators=(',', ':'),
+            ensure_ascii=False)
         print(f"🧾 [프록시] 재직렬화된 JSON 본문: {re_serialized}")
         print(f"📜 [DEBUG] 재직렬화 대상 객체: {body_json}")
 
