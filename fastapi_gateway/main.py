@@ -55,8 +55,8 @@ async def proxy_auth_middleware(request: Request, call_next): # call_next는 내
 
     return await call_next(request) # 다음 미들웨어 또는 라우터 함수로 요청 전달
 
-@app.post("/proxy/analyze")
-async def analyze_proxy(request: Request):
+@app.post("/proxy/analyze/{target}")
+async def analyze_proxy(request: Request, target: str):
     print("📥 [프록시] 요청 수신: /proxy/analyze")
     print("🔸 요청 헤더:", dict(request.headers))
     print("🔸 요청 IP:", request.client.host)
@@ -70,9 +70,17 @@ async def analyze_proxy(request: Request):
         if current > 10:
             return JSONResponse(status_code=429, content={"error": "요청 한도 초과 (1분에 10회)"})
 
+        # 대상 서버 포트 결정
+        if target == "community":
+            ai_url = "http://127.0.0.1:5000/analyze"
+        elif target == "chat":
+            ai_url = "http://127.0.0.1:5001/analyze"
+        else:
+            return JSONResponse(status_code=404, content={"error": f"지원하지 않는 분석 대상: {target}"})
+
         body = json.loads(request.state.body.decode("utf-8")) # 문자열로 디코딩
         async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
-            flask_response = await client.post(FLASK_AI_URL, json=body) # HTTP Header에는 Content-Type: application/json 자동 포함
+            flask_response = await client.post(ai_url, json=body) # HTTP Header에는 Content-Type: application/json 자동 포함
             result = flask_response.json()
 
         log_payload = {
