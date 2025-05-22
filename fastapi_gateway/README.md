@@ -15,7 +15,7 @@
         pip install redis
         pip install typing-inspect
         pip install fastapi-utils
-        pip install https
+        pip install httpx
     ```
 
 ## 중계 서버 실행
