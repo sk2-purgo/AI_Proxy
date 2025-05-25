@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
 from fastapi_gateway.routes import key_issuer
+from fastapi_gateway.routes import stats_router
 from fastapi_gateway.middlewares.auth_middleware import proxy_auth_middleware
 from fastapi_gateway.services.analyze_service import handle_analyze
 from fastapi_gateway.cleanup_task import cleanup_expired_api_keys
@@ -19,6 +20,7 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(key_issuer.router)
+app.include_router(stats_router.router, prefix="/proxy/stats")
 
 # 인증 미들웨어 수동 적용
 app.middleware("http")(proxy_auth_middleware)
