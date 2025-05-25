@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import uuid
 import secrets
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 
 router = APIRouter()
 
@@ -26,9 +27,10 @@ def issue_api_key(request: KeyIssueRequest):
     new_jwt_secret = secrets.token_urlsafe(64)
 
     api_key_entry = ApiKey(
-        user_name=request.user_name,
         api_key=new_api_key,
-        jwt_secret=new_jwt_secret
+        jwt_secret=new_jwt_secret,
+        status="ACTIVE",                      # 상태 명시
+        created_at=datetime.utcnow()          # 생성 시간 명시
     )
 
     try:

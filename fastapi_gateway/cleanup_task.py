@@ -8,21 +8,21 @@ def cleanup_expired_api_keys():
 
     try:
         # 1. 24시간 내 미사용된 키 삭제
-        threshold_1day = now - timedelta(days=1)
-        expired_never_used = db.query(ApiKey).filter(
+        threshold_7days = now - timedelta(days=7)
+        expired_unused = db.query(ApiKey).filter(
             ApiKey.last_used == None,
-            ApiKey.created_at < threshold_1day
+            ApiKey.created_at < threshold_7days
         ).all()
 
-        # 2. 마지막 사용이 30일 전인 키 삭제
-        threshold_30days = now - timedelta(days=30)
-        expired_long_unused = db.query(ApiKey).filter(
-            ApiKey.last_used != None,
-            ApiKey.last_used < threshold_30days
+        # 2. 발급일 기준 30일이 지난 키 (last_used 여부와 관계 없음)
+        threshold_created_30days = now - timedelta(days=30)
+        expired_created = db.query(ApiKey).filter(
+            ApiKey.created_at < threshold_created_30days
         ).all()
 
-        # 삭제 처리
-        for entry in expired_never_used + expired_long_unused:
+        # 중복 제거 및 삭제 처리
+        all_expired = set(expired_unused + expired_created)
+        for entry in all_expired:
             print(f"🗑️ 삭제 대상: {entry.api_key} (사용자: {entry.user_name})")
             db.delete(entry)
             deleted_count += 1

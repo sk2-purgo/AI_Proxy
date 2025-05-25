@@ -1,0 +1,1 @@
+print("✅ fastapi_gateway 패키지 로딩됨")
