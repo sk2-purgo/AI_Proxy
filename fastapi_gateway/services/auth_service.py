@@ -1,10 +1,8 @@
 from fastapi_gateway.utils.redis_client import redis_conn
 from fastapi_gateway.database import SessionLocal, ApiKey, StatusEnum
-from fastapi_gateway.jwt_utils import verify_server_jwt
+from fastapi_gateway.utils.jwt_utils import verify_server_jwt
 from fastapi import Request
-import json
 import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime
 
 async def verify_api_key_and_jwt(request: Request, request_body: dict) -> bool:

@@ -4,7 +4,10 @@ from fastapi_gateway.utils.log_publisher import publish_filter_log
 from fastapi_gateway.utils.log_publisher import publish_abuse_count
 from fastapi_gateway.utils.log_publisher import publish_badwords
 import httpx, json
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 async def handle_analyze(request: Request, target: str):
     print("📥 [프록시] 요청 수신: /proxy/analyze")
@@ -12,9 +15,9 @@ async def handle_analyze(request: Request, target: str):
     print("🔸 요청 IP:", request.client.host)
 
     if target == "community":
-        ai_url = "http://127.0.0.1:5000/analyze"
+        ai_url = os.getenv("AI_COMMUNITY_URL")
     elif target == "chat":
-        ai_url = "http://127.0.0.1:5001/analyze"
+        ai_url = os.getenv("AI_CHAT_URL")
     else:
         return JSONResponse(status_code=404, content={"error": f"지원하지 않는 분석 대상: {target}"})
 
