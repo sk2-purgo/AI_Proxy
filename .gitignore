@@ -1,37 +1,19 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+venv/
+.env
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+# IDE 설정 파일
 .vscode/
+.idea/
+
+# 로그 파일
+*.log
+
+# __pycache__ 폴더
+__pycache__/
+
+# Docker 관련 파일
+docker-compose.override.yml
+
+# 기타 배포에 필요 없는 파일
+*.pem
+.DS_Store

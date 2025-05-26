@@ -5,9 +5,12 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from enum import Enum as PyEnum
 import datetime
 from sqlalchemy import Enum as SqlEnum , Integer
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 #  DB 접속 정보
-DATABASE_URL = "mysql+pymysql://root:proxy1234@localhost:3307/purgo_proxy"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 #  SQLAlchemy 구성
 engine = create_engine(DATABASE_URL, echo=True)

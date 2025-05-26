@@ -6,7 +6,7 @@ from fastapi_gateway.database import SessionLocal, BadWord, ApiKey
 router = APIRouter()
 
 
-# ✅ 1. 욕 종류별 count 목록 조회 API
+# 1. 욕 종류별 count 목록 조회 API
 @router.get("/badwords")
 def get_badword_list():
     db = SessionLocal()
@@ -18,7 +18,7 @@ def get_badword_list():
         db.close()
 
 
-# ✅ 2. abuse_count 총합 조회 API
+# 2. abuse_count 총합 조회 API
 @router.get("/abuse-total")
 def get_abuse_total():
     db = SessionLocal()
