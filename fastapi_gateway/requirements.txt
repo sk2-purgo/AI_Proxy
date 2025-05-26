@@ -1,7 +1,13 @@
-# 의존성 
 fastapi
 uvicorn
-redis
 pyjwt
-requests
 cryptography
+httpx
+redis
+python-dotenv
+sqlalchemy
+pymysql
+fastapi-utils
+requests
+
+# pip install -r requirements.txt
