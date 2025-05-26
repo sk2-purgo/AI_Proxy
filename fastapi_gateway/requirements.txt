@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pyjwt
+cryptography
+httpx
+redis
+python-dotenv
+sqlalchemy
+pymysql
+fastapi-utils
+requests
+
+# pip install -r requirements.txt
