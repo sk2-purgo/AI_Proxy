@@ -23,12 +23,12 @@ async def handle_analyze(request: Request, target: str):
 
     try:
         body = json.loads(request.state.body.decode("utf-8"))
-        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
             flask_response = await client.post(ai_url, json=body)
             result = flask_response.json()
 
         # ✅ 1. 로그 발행 (fasttext_result 저장 포함)
-        fasttext_words = result.get("result", {}).get("fasttext_result", [])
+        fasttext_words = result.get("fasttext", {}).get("detected_words", [])
         publish_badwords(fasttext_words)
 
         # ✅ 2. abuse_count 발행 (비속어 판단 시)
