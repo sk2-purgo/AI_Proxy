@@ -1,19 +1,18 @@
-# fastapi_gateway/log_consumer.py
-
 import redis
 import json
 import traceback
 from fastapi_gateway.database import SessionLocal, BadWord, ApiKey
 
+# Redis 연결
 redis_conn = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 
 def run_consumer():
-    print("🟢 [log_consumer] filter-log, badword-log, abuse-log 채널 구독 시작")
+    print("🟢 [log_consumer] filter-log, badword-log, abuse-log, revoke-log 채널 구독 시작")
 
     try:
         pubsub = redis_conn.pubsub()
-        pubsub.subscribe("filter-log", "badword-log", "abuse-log")
-        print("📡 Redis PubSub 구독 완료: filter-log, badword-log, abuse-log")
+        pubsub.subscribe("filter-log", "badword-log", "abuse-log", "revoke-log")
+        print("📡 Redis PubSub 구독 완료: filter-log, badword-log, abuse-log, revoke-log")
 
         for message in pubsub.listen():
             if message["type"] != "message":
@@ -24,13 +23,13 @@ def run_consumer():
             data = message["data"]
 
             try:
-                # 필터링 로그 카운터만 증가
+                # ✅ 필터링 로그 카운터 증가
                 if channel == "filter-log":
                     log = json.loads(data)
                     print("📩 필터링 로그 수신:", log)
                     redis_conn.incr("filter:count")
 
-                # 욕설 단어 리스트 DB 저장
+                # ✅ 욕설 단어 리스트 DB 저장
                 elif channel == "badword-log":
                     word_list = json.loads(data)
                     print("📩 욕설 단어 수신:", word_list)
@@ -52,7 +51,7 @@ def run_consumer():
                     finally:
                         db.close()
 
-                # abuse count 증가
+                # ✅ abuse count 증가
                 elif channel == "abuse-log":
                     api_key = data.strip()
                     print("📩 abuse-log 수신:", api_key)
@@ -72,6 +71,14 @@ def run_consumer():
                         traceback.print_exc()
                     finally:
                         db.close()
+
+                # ✅ REVOKED 감지 시 Redis 캐시 삭제
+                elif channel == "revoke-log":
+                    api_key = data.strip()
+                    print(f"📩 revoke-log 수신: {api_key}")
+                    redis_conn.delete(f"jwt:secret:{api_key}")
+                    redis_conn.delete(f"api_key:{api_key}")
+                    print(f"🧯 Redis 캐시 삭제 완료: {api_key}")
 
             except Exception as e:
                 print("❌ 메시지 처리 실패:", str(e))
