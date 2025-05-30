@@ -7,6 +7,8 @@ import datetime
 from sqlalchemy import Enum as SqlEnum , Integer
 import os
 from dotenv import load_dotenv
+from sqlalchemy import event
+from fastapi_gateway.utils.redis_client import redis_conn
 
 load_dotenv()
 #  DB 접속 정보
@@ -41,3 +43,12 @@ class BadWord(Base):
     id = Column(Integer, primary_key=True, index=True)
     word = Column(String(64), unique=True, index=True)
     count = Column(Integer, default=1)
+
+# 상태가 변경된 ApiKey를 감지하고 publish
+@event.listens_for(SessionLocal, "after_flush")
+def after_flush(session, flush_context):
+    for instance in session.dirty:
+        if isinstance(instance, ApiKey):
+            if instance.status == "REVOKED":
+                redis_conn.publish("revoke-log", instance.api_key)
+                print(f"📡 [Hook] status='REVOKED' 감지됨 → Redis 발행 완료: {instance.api_key}")
