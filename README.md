@@ -1,5 +1,18 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=PROXY&fontSize75&animation=fadeIn&fontColor=FFF)
-
+<div align="center">
+  <img src="https://img.shields.io/badge/FastAPI-009688.svg?&style=for-the-badge&logo=fastapi&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Flask-000000.svg?&style=for-the-badge&logo=flask&logoColor=white"/>
+  <img src="https://img.shields.io/badge/PyTorch-EE4C2C.svg?&style=for-the-badge&logo=pytorch&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Transformers-FFBF00.svg?&style=for-the-badge&logo=huggingface&logoColor=black"/>
+  <img src="https://img.shields.io/badge/GluonNLP-0F92A1.svg?&style=for-the-badge&logo=mxnet&logoColor=white"/>
+  <img src="https://img.shields.io/badge/FastText-005571.svg?&style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/OpenAI-412991.svg?&style=for-the-badge&logo=openai&logoColor=white"/>
+  <img src="https://img.shields.io/badge/SentencePiece-3C78D8.svg?&style=for-the-badge&logo=google&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Scikit--learn-F7931E.svg?&style=for-the-badge&logo=scikit-learn&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Pandas-150458.svg?&style=for-the-badge&logo=pandas&logoColor=white"/>
+  <img src="https://img.shields.io/badge/matplotlib-11557C.svg?&style=for-the-badge&logo=plotly&logoColor=white"/>
+  <img src="https://img.shields.io/badge/pdfkit-333333.svg?&style=for-the-badge&logo=pdf&logoColor=white"/>
+</div>
 
 # AI Proxy Server (FastAPI)
 
