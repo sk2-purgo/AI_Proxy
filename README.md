@@ -1,4 +1,4 @@
-![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=192&section=header&text=AI%20PROXY&fontSize=65&animation=fadeIn&fontColor=FFF)
+![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=192&section=header&text=AI%40PROXY&fontSize=65&animation=fadeIn&fontColor=FFF)
 
 
 # AI Proxy Server (FastAPI)
